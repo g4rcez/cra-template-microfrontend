@@ -1,0 +1,45 @@
+{
+    "package": {
+        "scope": "mfscope",
+        "dependencies": {
+            "@arcanishq/styleguide": "1.1.7",
+            "react-router-dom": "5.2.0",
+            "react-router": "5.2.0",
+            "tailwindcss": "2.0.1",
+            "web-vitals": "1.0.1"
+        },
+        "devDependencies": {
+            "@testing-library/jest-dom": "5.11.4",
+            "@testing-library/react": "11.1.0",
+            "@testing-library/user-event": "12.1.10",
+            "@types/jest": "26.0.15",
+            "@types/node": "12.0.0",
+            "@types/react-dom": "17.0.0",
+            "@types/react": "17.0.0",
+            "bfj": "7.0.2",
+            "concurrently": "5.3.0",
+            "fs-extra": "9.0.1",
+            "mini-css-extract-plugin": "0.11.3",
+            "react-dev-utils": "11.0.1",
+            "typescript": "4.1.2",
+            "postcss": "8.1.10",
+            "postcss-cli": "8.3.0",
+            "postcss-import": "13.0.0",
+            "postcss-nested": "5.0.1",
+            "webpack": "4.44.2"
+        },
+        "scripts": {
+            "build": "NODE_ENV=production yarn cssprod && GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false node scripts/build",
+            "css": "postcss src/styles/css/index.css -o src/styles/css/dist.css --watch",
+            "cssprod": "postcss src/styles/css/index.css -o src/styles/css/dist.css",
+            "react": "react-scripts start",
+            "start": "concurrently \"yarn css\" \"yarn react\""
+        },
+        "eslintConfig": {
+            "extends": [
+                "react-app",
+                "react-app/jest"
+            ]
+        }
+    }
+}

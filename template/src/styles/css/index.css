@@ -1,0 +1,40 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+@import "@arcanishq/styleguide/dist/index.css";
+
+body,
+#root {
+  @apply bg-base text-dark-light;
+  scroll-margin-top: 1em;
+}
+
+::-moz-selection {
+  @apply bg-primary-light text-dark-light;
+}
+
+::selection {
+  @apply bg-primary-light text-dark-light;
+}
+
+html,
+body,
+#root,
+span,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  font-family: "Circular", sans-serif;
+}
+
+*:focus {
+  outline: 0;
+}
+
+form {
+  width: 100%;
+}
