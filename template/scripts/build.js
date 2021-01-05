@@ -34,7 +34,6 @@ verifyTypeScriptSetup();
 const path = require("path");
 const chalk = require("react-dev-utils/chalk");
 const fs = require("fs-extra");
-const bfj = require("bfj");
 const webpack = require("webpack");
 const configFactory = require("../config/webpack.config");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
@@ -76,11 +75,10 @@ config.optimization.splitChunks = {
     vendor: {
       test: /[\\/]node_modules[\\/]/,
       name(module) {
-        // get the name. E.g. node_modules/packageName/not/this/part.js
-        // or node_modules/packageName
-        const packageName = module.context.match(
-          /[\\/]node_modules[\\/](.*?)([\\/]|$)/
-        )[1];
+        const packageName = module.context
+          .match(/[\\/]node_modules[\\/]((.*?)([\\/](.*?)\/+?|$))/)[1]
+          .replace(/\/$/, "")
+          .replace(/\//g, "-");
         let version = undefined;
         const maybeRoot = module.context.split("/");
         try {
@@ -93,7 +91,6 @@ config.optimization.splitChunks = {
           const content = JSON.parse(fs.readFileSync(packJson, "utf-8"));
           version = content.version;
         }
-        // npm package names are URL-safe, but some servers don't like @ symbols
         if (version === undefined)
           return `vendor/${packageName.replace("@", "")}`;
         return `vendor/${packageName.replace("@", "")}_${version}`;
@@ -244,12 +241,6 @@ function build(previousFileSizes) {
         previousFileSizes,
         warnings: messages.warnings,
       };
-
-      return bfj
-        .write(paths.appBuild + "/bundle-stats.json", stats.toJson())
-        .then(() => resolve(resolveArgs))
-        .catch((error) => reject(new Error(error)));
-
       return resolve(resolveArgs);
     });
   });
