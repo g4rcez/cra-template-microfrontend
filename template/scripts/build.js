@@ -35,7 +35,7 @@ const path = require("path");
 const chalk = require("react-dev-utils/chalk");
 const fs = require("fs-extra");
 const webpack = require("webpack");
-const configFactory = require("../config/webpack.config");
+const configFactory = require("react-scripts/config/webpack.config");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const paths = require("react-scripts/config/paths");
 const checkRequiredFiles = require("react-dev-utils/checkRequiredFiles");
@@ -56,48 +56,31 @@ const WARN_AFTER_CHUNK_GZIP_SIZE = 1024 * 1024;
 
 const isInteractive = process.stdout.isTTY;
 
+const allDeps = {
+  ...packageJson.devDependencies,
+  ...packageJson.dependencies,
+};
+
+const universe = path.join(process.cwd(), "node_modules");
+const ENTRY = "package.json";
+
 // Warn and crash if required files are missing
 if (!checkRequiredFiles([paths.appHtml, paths.appIndexJs])) {
   process.exit(1);
 }
 
+const friendlyVersion = (v = "") => v.replace(/^[\^>=<~]{1,2}/, "");
+
+const urlFriendlyVersion = (packageJsonPath = "") => {
+  const v = require(packageJsonPath).version;
+  return friendlyVersion(v);
+};
+
 // Generate configuration
-const config = configFactory();
+const config = configFactory("production");
 config.output.filename = "static/js/[name].js";
 config.output.chunkFilename = "static/js/[name].js";
 config.output.jsonpFunction = packageJson.scope;
-
-config.optimization.splitChunks = {
-  chunks: "all",
-  maxInitialRequests: Infinity,
-  minSize: 0,
-  cacheGroups: {
-    vendor: {
-      test: /[\\/]node_modules[\\/]/,
-      name(module) {
-        const packageName = module.context
-          .match(/[\\/]node_modules[\\/]((.*?)([\\/](.*?)\/+?|$))/)[1]
-          .replace(/\/$/, "")
-          .replace(/\//g, "-");
-        let version = undefined;
-        const maybeRoot = module.context.split("/");
-        try {
-          const dir = maybeRoot.slice(0, -1).join("/");
-          const packJson = path.join(dir, "package.json");
-          const content = JSON.parse(fs.readFileSync(packJson, "utf-8"));
-          version = content.version;
-        } catch (error) {
-          const packJson = path.join(maybeRoot.join("/"), "package.json");
-          const content = JSON.parse(fs.readFileSync(packJson, "utf-8"));
-          version = content.version;
-        }
-        if (version === undefined)
-          return `vendor/${packageName.replace("@", "")}`;
-        return `vendor/${packageName.replace("@", "")}_${version}`;
-      },
-    },
-  },
-};
 
 config.plugins.forEach((x, i) => {
   if (x instanceof MiniCssExtractPlugin) {
@@ -107,6 +90,41 @@ config.plugins.forEach((x, i) => {
     });
   }
 });
+
+config.optimization.splitChunks = {
+  chunks: "all",
+  maxInitialRequests: 800,
+  minSize: 0,
+  cacheGroups: {
+    vendor: {
+      test: /[\\/]node_modules[\\/]/,
+      name(module) {
+        const moduleArray = module.context.split("/");
+        const pkg = module.context
+          .match(
+            /[\\/]node_modules[\\/]((@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*)\/?/
+          )[1]
+          .replace(/\/$/, "");
+        const urlFriendlyName = pkg.replace(/\//g, "-").replace("@", "");
+        if (pkg in allDeps) {
+          return `vendor/${urlFriendlyName.replace("@", "")}_${friendlyVersion(
+            allDeps[pkg]
+          )}`;
+        }
+        try {
+          return `vendor/${urlFriendlyName}_${urlFriendlyVersion(
+            path.join(universe, pkg, ENTRY)
+          )}`;
+        } catch (error) {
+          const pkgPath = moduleArray.indexOf("node_modules") + 2;
+          const pkgRoot = moduleArray.slice(0, pkgPath).join("/");
+          const version = urlFriendlyVersion(path.join(pkgRoot, ENTRY));
+          return `vendor/${urlFriendlyName.replace("@", "")}_${version}`;
+        }
+      },
+    },
+  },
+};
 
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.

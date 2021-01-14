@@ -1,18 +1,13 @@
-import React, { Profiler } from "react";
+import { StrictMode } from "react";
 import ReactDOM from "react-dom";
-import Colors from "./components/layout/colors.json";
-import { setCssVars, SubTitle } from "@arcanishq/styleguide";
-import "./styles/css/dist.css";
+import "./config";
+import { Routes } from "./routes";
 
-const root: HTMLElement = document.querySelector(":root") as any;
-
-setCssVars(Colors as never, root);
+const root = document.getElementById("root");
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Profiler>
-      <SubTitle>Hack The Planet</SubTitle>
-    </Profiler>
-  </React.StrictMode>,
-  document.getElementById("root")
+  <StrictMode>
+    <Routes />
+  </StrictMode>,
+  root
 );
