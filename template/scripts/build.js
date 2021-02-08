@@ -1,3 +1,4 @@
+// @ts-check
 // @remove-on-eject-begin
 /**
  * Copyright (c) 2015-present, Facebook, Inc.
@@ -30,7 +31,7 @@ if (process.env.SKIP_PREFLIGHT_CHECK !== "true") {
 const verifyTypeScriptSetup = require("react-scripts/scripts/utils/verifyTypeScriptSetup");
 verifyTypeScriptSetup();
 // @remove-on-eject-end
-
+const glob = require("glob");
 const path = require("path");
 const chalk = require("react-dev-utils/chalk");
 const fs = require("fs-extra");
@@ -44,6 +45,10 @@ const printHostingInstructions = require("react-dev-utils/printHostingInstructio
 const FileSizeReporter = require("react-dev-utils/FileSizeReporter");
 const printBuildError = require("react-dev-utils/printBuildError");
 const packageJson = require("../package.json");
+
+const appPackage = require(paths.appPackageJson);
+const publicUrl = paths.publicUrlOrPath;
+const buildFolder = path.relative(process.cwd(), paths.appBuild);
 
 const measureFileSizesBeforeBuild =
   FileSizeReporter.measureFileSizesBeforeBuild;
@@ -165,10 +170,7 @@ checkBrowsers(paths.appPath, isInteractive)
       );
       console.log();
 
-      const appPackage = require(paths.appPackageJson);
-      const publicUrl = paths.publicUrlOrPath;
       const publicPath = config.output.publicPath;
-      const buildFolder = path.relative(process.cwd(), paths.appBuild);
       printHostingInstructions(
         appPackage,
         publicUrl,
@@ -253,13 +255,20 @@ function build(previousFileSizes) {
         );
         return reject(new Error(messages.warnings.join("\n\n")));
       }
-
-      const resolveArgs = {
-        stats,
-        previousFileSizes,
-        warnings: messages.warnings,
-      };
-      return resolve(resolveArgs);
+      return glob(path.join(buildFolder, "**", "*"), (error, files) => {
+        const allFilesContent = files.map((x) => x.replace(/^build/, ""));
+        fs.writeFileSync(
+          path.join(buildFolder, "__files__.json"),
+          JSON.stringify(allFilesContent),
+          { encoding: "utf-8" }
+        );
+        const resolveArgs = {
+          stats,
+          previousFileSizes,
+          warnings: messages.warnings,
+        };
+        return resolve(resolveArgs);
+      });
     });
   });
 }
